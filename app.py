@@ -1,10 +1,11 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_file
 from email.mime.text import MIMEText
 from email.utils import formataddr
 import smtplib
 from dotenv import load_dotenv
 import requests, random, datetime, os
 from gtts import gTTS
+import tempfile
 
 load_dotenv()
 
@@ -87,11 +88,23 @@ def versiculo_aleatorio():
     return f"📖 Salmo {salmo_numero}:{versiculo_num}\n“{versiculo['text'].strip()}”"
 
 def gerar_audio(texto):
-    os.makedirs("static/audio", exist_ok=True)
-    caminho = os.path.join("static/audio", "devocional.mp3")
-    tts = gTTS(texto, lang="pt-br")
-    tts.save(caminho)
-    return "/static/audio/devocional.mp3"
+    try:
+        # Cria arquivo temporário de áudio
+        tmp_path = os.path.join(tempfile.gettempdir(), "salmo.mp3")
+        tts = gTTS(text=texto, lang="pt", slow=False)
+        tts.save(tmp_path)
+
+        # Retorna o arquivo para o navegador
+        return send_file(tmp_path, mimetype="audio/mpeg")
+
+    except Exception as e:
+        print(f"Erro ao gerar áudio: {e}")
+        return jsonify({"message": "Erro ao gerar áudio"}), 500
+    # os.makedirs("static/audio", exist_ok=True)
+    # caminho = os.path.join("static/audio", "devocional.mp3")
+    # tts = gTTS(texto, lang="pt-br")
+    # tts.save(caminho)
+    # return "/static/audio/devocional.mp3"
 
 # ===== Rotas Flask =====
 
