@@ -160,7 +160,7 @@ def enviar_email():
 
         # return jsonify({"message": f"E-mail enviado com sucesso para {destino}!"})
         data = {
-            "sender": {"name": "Salmos da Esperança 🌿", "email": "no-reply@salmosdaesperanca.com"},
+            "sender": {"name": "Salmos da Esperança 🌿", "email": "inovaglc@gmail.com"},
             "to": [{"email": destino}],
             "subject": "Seu Devocional Diário 🌿",
             "htmlContent": corpo_email_html
