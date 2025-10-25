@@ -135,25 +135,42 @@ def enviar_email():
         return jsonify({"message": "E-mail não informado, ou dados incompletos."}), 400
 
     try:
-        remetente = EMAIL_USER
-        senha = EMAIL_PASS
+        #remetente = EMAIL_USER
+       # senha = EMAIL_PASS
         nome_assinante = destino.split("@")[0]
-       # corpo_email = f"{EMAIL_INTRO.format(nome_assinante=nome_assinante)}\n{texto}"
         corpo_email_html = EMAIL_TEMPLATE_HTML.format(
             nome_assinante=nome_assinante,
             texto_salmo=texto.replace("\n", "<br>")
         ) 
-        msg = MIMEText(corpo_email_html, "html", "utf-8")
-        # msg = MIMEText(corpo_email, "plain", "utf-8")
-        msg["Subject"] = "Seu Devocional Diário 🌿"
-        msg["From"] = formataddr(("Salmos da Esperança 🌿", remetente))
-        msg["To"] = destino
+        url = "https://api.brevo.com/v3/smtp/email"
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "api-key": os.getenv("BREVO_API_KEY")
+        }
+        # msg = MIMEText(corpo_email_html, "html", "utf-8")
+        # # msg = MIMEText(corpo_email, "plain", "utf-8")
+        # msg["Subject"] = "Seu Devocional Diário 🌿"
+        # msg["From"] = formataddr(("Salmos da Esperança 🌿", remetente))
+        # msg["To"] = destino
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login(remetente, senha)
-            smtp.send_message(msg)
+        # with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        #     smtp.login(remetente, senha)
+        #     smtp.send_message(msg)
 
-        return jsonify({"message": f"E-mail enviado com sucesso para {destino}!"})
+        # return jsonify({"message": f"E-mail enviado com sucesso para {destino}!"})
+        data = {
+            "sender": {"name": "Salmos da Esperança 🌿", "email": "no-reply@salmosdaesperanca.com"},
+            "to": [{"email": destino}],
+            "subject": "Seu Devocional Diário 🌿",
+            "htmlContent": corpo_email_html
+        }
+        resp = requests.post(url, headers=headers, json=data, timeout=15)
+        print("Brevo status:", resp.status_code, resp.text)
+        if resp.status_code in (200, 201):
+            return jsonify({"message": f"E-mail enviado com sucesso para {destino}!"})
+        else:
+            return jsonify({"message": "Erro ao enviar e-mail via Brevo.", "detail": resp.text}), 500
     except Exception as e:
         print(e)
         return jsonify({"message": "Erro ao enviar e-mail."}), 500
