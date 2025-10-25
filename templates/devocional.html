@@ -40,7 +40,11 @@ async function ouvirSalmo() {
   botao.disabled = true;
   botao.innerText = "🎧 Gerando áudio...";
   try {
-    const res = await fetch("/voz");
+    const res = await fetch("/voz",{
+        method: "POST", 
+        headers: {"Content-Type": "application/json"}, 
+        body: JSON.stringify({texto: `{{ texto | tojson }}` })
+    });
     const data = await res.json();
     if (data.audio_url) {
       audio.src = data.audio_url + "?t=" + Date.now();
