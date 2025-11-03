@@ -30,33 +30,57 @@
 
     <a href="/" class="btn btn-outline-primary mt-3">⬅️ Voltar</a>
   </div>
+  <div id="salmoData" data-text="{{ texto | e('html_attr') }}"></div>
 </div>
 
 <script>
-async function ouvirSalmo() {
-  const botao = document.getElementById("btnOuvir");
-  const audio = document.getElementById("audioSalmo");
 
-  botao.disabled = true;
-  botao.innerText = "🎧 Gerando áudio...";
-  try {
-    const res = await fetch("/voz",{
-        method: "POST", 
-        headers: {"Content-Type": "application/json"}, 
-        body: JSON.stringify({texto: `{{ texto | tojson }}` })
-    });
-    const data = await res.json();
-    if (data.audio_url) {
-      audio.src = data.audio_url + "?t=" + Date.now();
-      audio.hidden = false;
-      await audio.play();
-      botao.innerText = "🔊 Reproduzindo...";
+  const salmoTexto = document.getElementById('salmoData').dataset.text || "";
+
+ async function ouvirSalmo() {
+    const botao = document.getElementById("btnOuvir");
+    const audio = document.getElementById("audioSalmo");
+
+    botao.disabled = true;
+    botao.innerText = "🎧 Gerando áudio...";
+
+    try {
+      // cheque no console se o texto chegou corretamente
+      console.log("salmoTexto:", salmoTexto);
+
+      const res = await fetch("/voz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto: salmoTexto })
+      });
+
+      // verificar status e json
+      if (!res.ok) {
+        const txt = await res.text();
+        console.error("Resposta /voz não OK:", res.status, txt);
+        botao.innerText = "Erro ao gerar áudio";
+        botao.disabled = false;
+        return;
+      }
+
+      const data = await res.json();
+      console.log("Resposta /voz:", data);
+
+      if (data.audio_url) {
+        audio.src = data.audio_url + "?t=" + Date.now();
+        audio.hidden = false;
+        await audio.play();
+        botao.innerText = "🔊 Reproduzindo...";
+      } else {
+        botao.innerText = "Erro ao gerar áudio";
+      }
+    } catch (err) {
+      console.error("Erro no ouvirSalmo:", err);
+      botao.innerText = "Erro na reprodução";
+    } finally {
+      botao.disabled = false;
     }
-  } catch {
-    botao.innerText = "Erro na reprodução";
   }
-  botao.disabled = false;
-}
 
 async function enviarEmail() {
   const email = document.getElementById("email").value;

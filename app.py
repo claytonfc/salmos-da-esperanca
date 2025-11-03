@@ -130,8 +130,23 @@ def voz():
     if not texto:
         return jsonify({"error": "Texto não fornecido"}), 400
 
-    caminho_audio = gerar_audio(texto)
-    return jsonify({"audio_url": caminho_audio})
+    # Garantir que a pasta existe
+    os.makedirs("static/audio", exist_ok=True)
+
+    # Nome aleatório para evitar cache
+    nome_arquivo = f"salmo_{random.randint(10000,99999)}.mp3"
+    caminho = os.path.join("static/audio", nome_arquivo)
+
+    # Gera o áudio
+    try:
+        tts = gTTS(text=texto, lang="pt", slow=False)
+        tts.save(caminho)
+    except Exception as e:
+        print("Erro ao gerar áudio:", e)
+        return jsonify({"error": "Falha ao gerar áudio"}), 500
+
+    # Retorna a URL acessível
+    return jsonify({"audio_url": f"/static/audio/{nome_arquivo}"})
 
 @app.route("/registrar", methods=["GET", "POST"])
 def registrar():
